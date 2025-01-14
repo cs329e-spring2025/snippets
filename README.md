@@ -1,1 +1,1 @@
-# Resources for CS 329E - Spring 2025
+### Resources for CS 329E - Spring 2025
