@@ -1,0 +1,17 @@
+
+version: 2
+
+sources:
+  - name: air_travel_raw
+    database: cs329e-sp2025
+    schema: air_travel_raw  
+    tables:
+      - name: aircrafts
+      - name: airlines
+      - name: airport_businesses
+      - name: airport_reviews
+      - name: airports
+      - name: countries
+      - name: flight_delays
+      - name: flight_routes	
+      - name: tsa_traffic
