@@ -5,12 +5,12 @@ from google.cloud import bigquery
 
 region = "us-central1"
 model_name = "gemini-2.0-flash-001"
-prompt = """Go through this list of business names and standardize them to remove the variations in spelling.
-For example, 'Sweet Jill Bakery' and 'Sweet Jill's Bakery' both refer to the same business, so standardize on one or the other.
-Another example is, 'Alaska Airline' and 'Alaska Airlines'. Since they both refer to the same business, standardize on 'Alaska Airlines'.
-Suggest a standard name, mapping the current one to the new one.
-Return the list of original business names along with their updated names.
-Format the results as a json object with the schema: current_name:string, new_new:string.
+prompt = """Go through the list of business names and standardize them by removing variations in spelling and case.
+For example, 'Sweet Jill Bakery' and 'Sweet Jill's Bakery' both refer to the same business, so choose one of them, the most common spelling.
+Another example is, 'Alaska Airline' and 'Alaska Airlines'. They both refer to the same business, standardize on 'Alaska Airlines'.
+Suggest a standard name for each business, mapping the current name to the new one.
+Return the list of original names along with their updated names.
+Format the results as a list of json objects with the schema: [{"current_name" : string, "new_new" : string}].
 Do not include any unchanged business names with your answer.
 Do not include an explanation with your answer.
 """
@@ -27,14 +27,6 @@ def do_inference(input_str):
     
     replacements = {}
 
-    # names can be either a dictionary or list type (depending on what the LLM decides to do!)
-    if type(names) == dict:
-        for old, new in names.items():
-            if old == new:
-                continue
-            else:
-                replacements[old] = new
-
     if type(names) == list:
         for name_entry in names:
             if name_entry['current_name'] == name_entry['new_name']:
@@ -49,13 +41,13 @@ def model(dbt, session):
    
     # dbt.config(post_hook = "drop table dbt_air_travel_stg.tmp_business_categories")
     
-    business_names_sql = "select distinct business from dbt_air_travel_stg.tmp_business_categories order by business"
+    business_names_sql = "select distinct business from dbt_air_travel_stg.tmp_business_categories order by business limit 10"
     bq_client = bigquery.Client()
     rows = bq_client.query_and_wait(business_names_sql)
 
     batch_size = 500
     business_names = []
-    combined_replacements = {}
+    combined_replacements = []
 
     for i, row in enumerate(rows):
 
@@ -66,7 +58,7 @@ def model(dbt, session):
             print("processing batch")
             business_names_str = '\n'.join(business_names)
             replacements = do_inference(business_names_str)
-            combined_replacements.update(replacements)
+            combined_replacements.extend(replacements)
 
             # reset business_names to process next batch
             business_names = []
@@ -75,7 +67,7 @@ def model(dbt, session):
         print("processing last batch")
         business_names_str = '\n'.join(business_names)
         replacements = do_inference(business_names_str)
-        combined_replacements.update(replacements)
+        combined_replacements.extend(replacements)
 
     print("combined_replacements:", combined_replacements)
 

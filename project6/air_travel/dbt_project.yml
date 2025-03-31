@@ -31,12 +31,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   air_travel:
-    staging:
+    stg:
       +materialized: table
       +schema: dbt_air_travel_stg
     int:
       +materialized: table
       +schema: dbt_air_travel_int
-    mart:
+    mrt:
       +materialized: table
       +schema: dbt_air_travel_mrt
