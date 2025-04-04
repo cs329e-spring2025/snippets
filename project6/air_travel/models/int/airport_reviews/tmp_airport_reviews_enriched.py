@@ -1,8 +1,9 @@
 
 import json
+from jsonschema import validate
 import pandas
 import numpy
-from pyspark.sql import Row
+from pyspark.sql.types import StructField, StructType, IntegerType, BooleanType, StringType
 import vertexai
 from vertexai.generative_models import GenerativeModel, HarmCategory, HarmBlockThreshold, SafetySetting
 
@@ -43,13 +44,26 @@ def do_inference(input_str):
         # something likely went wrong, fail fast
         return results
     
-    print("resp:", resp)
+    #print("resp:", resp)
     
     resp_text = resp.text.replace("```json", "").replace("```", "").replace("\n", "")
     print("resp_text:", resp_text)
 
     try:
         results = json.loads(resp_text)
+
+        json_schema = {"type" : "object",
+            "properties" : {
+            "id" : {"type" : "number"},
+            "relevant" : {"type" : "boolean"},
+            "sentiment" : {"type" : "string"},
+            },
+         }
+        
+        # ensure that all the records conform to the schema
+        for obj in results:
+            validate(obj, json_schema)
+        
     except Exception as e:
         print("Error while parsing json:", e, ". The error was caused by:", resp_text)
         return []
@@ -63,7 +77,7 @@ def model(dbt, session):
     num_reviews = input_df.count()
     print("num_reviews:", num_reviews)
 
-    batch_size = 10
+    batch_size = 5
     num_batches = int(num_reviews / batch_size)
     combined_results = []
     
@@ -78,7 +92,14 @@ def model(dbt, session):
         combined_results.extend(results)
 
     print("combined_results:", combined_results)
-    output_df = session.createDataFrame(Row(**x) for x in combined_results)
+
+    schema = StructType([
+        StructField("id", IntegerType(), True),
+        StructField("relevant", BooleanType(), True),
+        StructField("sentiment", StringType(), True)
+        ])
+
+    output_df = session.createDataFrame(combined_results, schema)
     output_df.show(truncate=False)
     
     return output_df

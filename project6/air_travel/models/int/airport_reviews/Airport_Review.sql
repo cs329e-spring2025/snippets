@@ -4,9 +4,8 @@ with int_Airport_Review as (
     from {{ ref('tmp_airport_reviews') }} rev
     left join {{ ref('tmp_airport_reviews_enriched') }} enc
     on rev.id = enc.id
-    where id is not null 
-    and subject is not null 
-    and body is not null
+    where rev.subject is not null 
+    and rev.body is not null
 )
 
 select *

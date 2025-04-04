@@ -2,7 +2,7 @@
 
 with int_Menu_Items as (
     select name as business_name, split(menu_items, ',') as menu_items_array, _data_source, _load_time
-    from air_travel_int.Business
+    from {{ ref('Business') }}
     where dining = True
 )
 
