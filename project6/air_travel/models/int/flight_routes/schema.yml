@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: Flight_Routes
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: route_id
+        data_type: int64
+        constraints:
+          - type: primary_key
+        tests:
+          - unique
+          - not_null
+      - name: airline_id
+        data_type: int64
+        constraints:
+          - type: foreign_key
+            to: ref('Airline')
+            to_columns: [id]
+        tests:
+          - relationships:
+              to: ref('Airline')
+              field: id
+          - not_null
+      - name: source_airport_icao
+        data_type: string
+        constraints:
+          - type: foreign_key
+            to: ref('Airport')
+            to_columns: [icao]
+        tests:
+          - relationships:
+              to: ref('Airport')
+              field: icao
+      - name: dest_airport_icao
+        data_type: string
+        constraints:
+          - type: foreign_key
+            to: ref('Airport')
+            to_columns: [icao]
+        tests:
+          - relationships:
+              to: ref('Airport')
+              field: icao
+      - name: codeshare
+        data_type: boolean
+      - name: stops
+        data_type: int64
+      - name: _data_source
+        data_type: string
+      - name: _load_time
+        data_type: timestamp
+  - name: Route_Equipment
+    config:
+        contract:
+          enforced: true
+    constraints:
+        - type: primary_key
+          columns: [route_id, aircraft_icao]
+    columns:
+        - name: route_id
+          data_type: int64
+          constraints:
+            - type: foreign_key
+              to: ref('Flight_Routes')
+              to_columns: [route_id]
+          tests:
+            - not_null
+        - name: aircraft_icao
+          data_type: string
+          constraints:
+            - type: foreign_key
+              to: ref('Aircraft')
+              to_columns: [icao]
+          tests:
+            - not_null
+        - name: _data_source
+          data_type: string
+        - name: _load_time
+          data_type: timestamp
+    tests:
+        - unique_combination_of_columns: 
+            combination_of_columns:
+              - route_id
+              - aircraft_icao

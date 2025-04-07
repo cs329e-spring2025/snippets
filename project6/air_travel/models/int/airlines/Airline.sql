@@ -1,5 +1,5 @@
 -- the final Airline table is obtained by replacing the countries that don't have referential integrity
--- with the ones collected in tmp_airlines_countries_filtered 
+-- with the ones collected in tmp_airlines_countries_filtered
 
 {{ config(
     post_hook = [

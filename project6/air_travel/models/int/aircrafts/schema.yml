@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: Aircraft
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: icao
+        data_type: string
+        constraints:
+          - type: primary_key
+        tests:
+          - unique
+          - not_null
+      - name: iata
+        data_type: string
+      - name: name
+        data_type: string
+      - name: _data_source
+        data_type: string
+      - name: _load_time
+        data_type: timestamp

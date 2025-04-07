@@ -1,3 +1,11 @@
+{{ config(
+    post_hook = [
+        "delete from {{ this }} where icao = 'E135' and iata = 'ERD'",
+        "update {{ this }} set iata = 'ERJ' where icao = 'E135' and iata = 'ER3'",
+        "delete from {{ this }} where icao = 'B737' and iata = '73G' and name = 'Boeing 737'"
+    ]
+) }}
+
 with int_Aircraft as (
     select icao, iata, name, _data_source, _load_time
     from {{ ref('aircrafts') }}

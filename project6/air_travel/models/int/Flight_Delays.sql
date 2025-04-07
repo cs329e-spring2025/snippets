@@ -9,3 +9,6 @@ with int_Flight_Delays as (
 
 select *
 from int_Flight_Delays
+where event_month is not null
+and airline_id is not null
+and airport_icao is not null

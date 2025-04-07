@@ -1,0 +1,104 @@
+version: 2
+
+models:
+  - name: Airport_Businesses
+    config:
+      contract:
+        enforced: true
+    constraints:
+      - type: primary_key
+        columns: [icao, terminal, business, location]
+    columns:
+      - name: icao
+        data_type: string
+        constraints:
+          - type: foreign_key
+            to: ref('Airport')
+            to_columns: [icao]
+        tests:
+          - relationships:
+              to: ref('Airport')
+              field: icao
+        tests:
+          - not_null
+      - name: terminal
+        data_type: string
+        tests:
+          - not_null
+      - name: business
+        data_type: string
+        constraints:
+          - type: foreign_key
+            to: ref('Business')
+            to_columns: [name]
+        tests:
+          - relationships:
+              to: ref('Business')
+              field: name
+        tests:
+          - not_null
+      - name: location
+        data_type: string
+        tests:
+          - not_null
+      - name: _data_source
+        data_type: string
+      - name: _load_time
+        data_type: timestamp
+    tests:
+      - unique_combination_of_columns: 
+          combination_of_columns:
+            - icao
+            - terminal
+            - business
+            - location
+  - name: Business
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: name
+        data_type: string
+        constraints:
+          - type: primary_key
+        tests:
+          - unique
+          - not_null
+      - name: category
+        data_type: string
+      # note that the menu_items column gets dropped in the post-hook of Business
+      - name: menu_items
+        data_type: string
+      - name: _data_source
+        data_type: string
+      - name: _load_time
+        data_type: timestamp
+  - name: Menu_Items
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: business_name
+        data_type: string
+        constraints:
+          - type: foreign_key
+            to: ref('Business')
+            to_columns: [name]
+        tests:
+          - relationships:
+              to: ref('Business')
+              field: name
+          - not_null
+      - name: menu_item
+        data_type: string
+        tests:
+          - not_null
+      - name: _data_source
+        data_type: string
+      - name: _load_time
+        data_type: timestamp
+    tests:
+      - unique_combination_of_columns: 
+          combination_of_columns:
+            - business_name
+            - menu_item

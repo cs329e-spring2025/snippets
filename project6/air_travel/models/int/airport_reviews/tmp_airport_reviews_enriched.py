@@ -3,23 +3,25 @@ import json
 from jsonschema import validate
 import pandas
 import numpy
-from pyspark.sql.types import StructField, StructType, IntegerType, BooleanType, StringType
+from pyspark.sql.types import StructField, StructType, IntegerType, StringType
 import vertexai
 from vertexai.generative_models import GenerativeModel, HarmCategory, HarmBlockThreshold, SafetySetting
 
 region = "us-central1"
 model_name = "gemini-2.0-flash-001"
 prompt = """Go through the list of reviews that I pass you and apply the following logic:
-    If a review refers to an airport, return relevant = True, otherwise return relevant = False.
-    If a review's sentiment is positive, return 'positive'; if it's negative, return 'negative'; if it's mixed, return 'mixed'. If it's neutral, return 'neutral'. If it's none of these, return 'other'.  
+If a review clearly pertains to an airport, return relevant = 'yes'. If a review clearly doesn't pertain to an airport, return 'no'. If you're not sure whether it's about an airport matter, return 'unknown'. 
+If a review's sentiment is clearly positive, return 'positive'; if it's clearly negative, return 'negative'; if it has both positive and negative elements, return 'mixed'. If the review is neither positive nor negative, return 'neutral'. If it's not positive, negative, mixed, or neutral, return 'unknown'. 
+Do not return any other sentiment types.  
 Return the review's id, relevance, and sentiment.
-Format the results as a list of json objects with the schema: [{"id" : integer, "relevant" : boolean, "sentiment" : string}]
+Format the results as a list of json objects with the schema: [{"id" : integer, "relevant" : string, "sentiment" : string}]
 Do not include an explanation with your answer.
+Do not return more than one answer for each review. 
 
 Here's what the output should look like:
-[{"id" : 123, "relevant" : true, "sentiment" : 'positive'},
-{"id" : 456, "relevant" : true, "sentiment" : 'mixed'},
-{"id" : 789, "relevant" : true, "sentiment" : 'other'}]
+[{"id" : 123, "relevant" : 'no', "sentiment" : 'positive'},
+{"id" : 456, "relevant" : 'yes', "sentiment" : 'mixed'},
+{"id" : 789, "relevant" : 'unknown', "sentiment" : 'negative'}]
 """
 
 safety_config = [
@@ -47,7 +49,7 @@ def do_inference(input_str):
     #print("resp:", resp)
     
     resp_text = resp.text.replace("```json", "").replace("```", "").replace("\n", "")
-    print("resp_text:", resp_text)
+    #print("resp_text:", resp_text)
 
     try:
         results = json.loads(resp_text)
@@ -55,7 +57,7 @@ def do_inference(input_str):
         json_schema = {"type" : "object",
             "properties" : {
             "id" : {"type" : "number"},
-            "relevant" : {"type" : "boolean"},
+            "relevant" : {"type" : "string"},
             "sentiment" : {"type" : "string"},
             },
          }
@@ -75,7 +77,7 @@ def model(dbt, session):
     
     input_df = dbt.ref("tmp_airport_reviews")
     num_reviews = input_df.count()
-    print("num_reviews:", num_reviews)
+    print("num_reviews to process:", num_reviews)
 
     batch_size = 5
     num_batches = int(num_reviews / batch_size)
@@ -86,20 +88,21 @@ def model(dbt, session):
     
     for i in range(num_batches):
         subset_reviews = batches[i].to_string(header=False)
-        print("subset_reviews:", subset_reviews)
+        #print("subset_reviews:", subset_reviews)
     
         results = do_inference(subset_reviews)
         combined_results.extend(results)
 
-    print("combined_results:", combined_results)
+    #print("combined_results:", combined_results)
 
     schema = StructType([
         StructField("id", IntegerType(), True),
-        StructField("relevant", BooleanType(), True),
+        StructField("relevant", StringType(), True),
         StructField("sentiment", StringType(), True)
         ])
 
     output_df = session.createDataFrame(combined_results, schema)
-    output_df.show(truncate=False)
-    
+    num_reviews = output_df.count()
+    print("num_reviews returned:", num_reviews)
+
     return output_df

@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: Airport
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: icao
+        data_type: string
+        constraints:
+          - type: primary_key
+        tests:
+          - unique
+          - not_null
+      - name: iata
+        data_type: string
+      - name: name
+        data_type: string
+      - name: city
+        data_type: string
+      - name: state
+        data_type: string
+      - name: country
+        data_type: string
+        constraints:
+          - type: foreign_key
+            to: ref('Country')
+            to_columns: [name]
+        tests:
+          - relationships:
+              to: ref('Country')
+              field: name
+      - name: latitude
+        data_type: bignumeric
+      - name: longitude
+        data_type: bignumeric
+      - name: altitude
+        data_type: integer
+      - name: timezone_name
+        data_type: string
+      - name: timezone_delta
+        data_type: integer
+      - name: daylight_savings_time
+        data_type: string
+      - name: type
+        data_type: string
+      - name: source
+        data_type: string
+      - name: _data_source
+        data_type: string
+      - name: _load_time
+        data_type: timestamp

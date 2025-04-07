@@ -17,7 +17,7 @@ Here is the list of reference countries: \n
 def model(dbt, session):
     
     country_df = dbt.ref("Country")
-    country_orphans_df = dbt.ref("tmp_airlines_countries_orphan") # countries in the airline table which don't exist in the Country table
+    country_orphans_df = dbt.ref("tmp_airports_countries_orphan") # countries in the airports table which don't exist in the Country table
 
     num_country = country_df.count()
     print("num_country:", num_country)

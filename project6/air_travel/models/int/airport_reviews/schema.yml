@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: Airport_Review
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: id
+        data_type: int64
+        constraints:
+          - type: primary_key
+        tests:
+          - unique
+          - not_null
+      - name: thread_id
+        data_type: int64
+      - name: icao
+        data_type: string
+        constraints:
+          - type: foreign_key
+            to: ref('Airport')
+            to_columns: [icao]
+        tests:
+          - relationships:
+              to: ref('Airport')
+              field: icao
+      - name: date_created
+        data_type: datetime
+      - name: author
+        data_type: string
+      - name: subject
+        data_type: string
+      - name: body
+        data_type: string
+      - name: relevant
+        data_type: string
+      - name: sentiment
+        data_type: string
+      - name: _data_source
+        data_type: string
+      - name: _load_time
+        data_type: timestamp
